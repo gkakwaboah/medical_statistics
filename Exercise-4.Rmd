@@ -1,0 +1,109 @@
+---
+title: "Exercise 4"
+author: "G.K Akwaboah"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Install and load pROC package
+
+```{r}
+if (!require("pROC")) install.packages("pROC")
+library(pROC)
+```
+
+#Load the CSV from local file path
+
+```{r}
+file_path <- "C:/Users/gkakw/Desktop/Kiel/001 semester 1/004 Med Statistics/gestational_diabetes.csv"
+gdm_data <- read.csv2(file_path, dec = ",")
+```
+
+#Preview the data
+
+```{r}
+head(gdm_data)
+str(gdm_data)
+```
+
+
+# Generate ROC curves for FPGC and GCT
+```{r}
+roc_fpgc <- roc(gdm_data$gold, gdm_data$conc_fpgc, ci = TRUE)
+roc_gct  <- roc(gdm_data$gold, gdm_data$conc_gct, ci = TRUE)
+
+plot(roc_fpgc, col = "blue", main = "ROC Curves: FPGC vs GCT")
+plot(roc_gct, col = "red", add = TRUE)
+legend("bottomright", legend = c("Fasting plasma glucose concentration", "Glucose chalenge test"), col = c("blue", "red"), lwd = 2)
+```
+
+`roc(...)` creates an ROC (Receiver Operating Characteristic) curve.
+
+
+`gdm_data$gold` is the true diagnosis (1 = has gestational diabetes, 0 = does not).
+
+`gdm_data$conc_fpgc` and `gdm_data$conc_gct` are the numeric test results (plasma glucose concentrations).
+
+`ci = TRUE` asks for confidence intervals of the AUC (Area Under Curve).
+
+The idea is to Plot both ROC curves on the same graph.
+
+First `plot()` draws FPGC's ROC in blue.
+
+`add` = TRUE overlays GCT's ROC in red on the same plot.
+
+`legend(...)` adds a label to identify which line is which.
+
+
+
+# Get Youden thresholds and corresponding sensitivity/specificity
+```{r}
+coords_fpgc <- coords(roc_fpgc, "best", ret = c("threshold", "sensitivity", "specificity"), best.method = "youden")
+coords_gct  <- coords(roc_gct,  "best", ret = c("threshold", "sensitivity", "specificity"), best.method = "youden")
+
+coords_fpgc
+coords_gct
+```
+`coords(..., "best", ...)`	Find best threshold using Youden Index
+
+`threshold` the test result value that best separates positive and negative cases.
+
+sensitivity how well the test identifies true positives.
+
+specificity how well the test identifies true negatives.
+
+
+# Create confusion matrices and manually verify sensitivity/specificity
+Apply thresholds to get predicted values
+```{r}
+gdm_data$pred_fpgc <- ifelse(gdm_data$conc_fpgc >= as.numeric(coords_fpgc["threshold"]), 1, 0)
+gdm_data$pred_gct  <- ifelse(gdm_data$conc_gct  >= as.numeric(coords_gct["threshold"]), 1, 0)
+```
+
+
+# Create confusion matrices
+
+```{r}
+table_fpgc <- table(Actual = gdm_data$gold, Predicted = gdm_data$pred_fpgc)
+table_gct  <- table(Actual = gdm_data$gold, Predicted = gdm_data$pred_gct)
+```
+
+# Manually calculate sensitivity & specificity
+
+```{r}
+list(
+  FPGC = list(
+    Sensitivity = table_fpgc[2,2] / sum(table_fpgc[2,]),
+    Specificity = table_fpgc[1,1] / sum(table_fpgc[1,])
+  ),
+  GCT = list(
+    Sensitivity = table_gct[2,2] / sum(table_gct[2,]),
+    Specificity = table_gct[1,1] / sum(table_gct[1,])
+  )
+)
+```
+

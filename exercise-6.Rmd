@@ -1,0 +1,87 @@
+---
+title: "Exercise 6"
+author: "G.K Akwaboah"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+#Part A
+Scientific Question: Does smoking by the mother during pregnancy reduce the birth weight of the baby compared to the population mean of 3,200 grams?
+
+Null Hypothesis (H₀): The mean birth weight of babies born to mothers who smoke during pregnancy is equal to the population mean, i.e., μ = 3,200 grams.
+
+Alternative Hypothesis (Hₐ): The mean birth weight of babies born to mothers who smoke during pregnancy is less than the population mean, i.e., μ < 3,200 grams.
+
+Significance Level (α): A significance level of α = 0.05
+
+#Part B
+The appropriate statistical test is a one-sample t-test. This test is used to compare the mean birth weight of the sample (babies of smoking mothers) to the known population mean of 3,200 grams, allowing a decision between H₀ and Hₐ based on the sample data.
+
+Load the MASS library
+```{r}
+library(MASS)
+```
+
+Filter data for smoking mothers (smoke = 1)
+```{r}
+smoking_data <- birthwt[birthwt$smoke == 1, ]
+```
+
+Calculate mean and standard deviation
+
+```{r}
+mean_bwt <- mean(smoking_data$bwt)
+sd_bwt <- sd(smoking_data$bwt)
+n <- nrow(smoking_data)
+```
+
+Population mean
+
+```{r}
+mu_0 <- 3200
+```
+
+Calculate the t-test statistic
+
+```{r}
+t_stat <- (mean_bwt - mu_0) / (sd_bwt / sqrt(n))
+```
+
+Print Results
+
+```{r}
+cat("Mean birth weight:", round(mean_bwt, 2), "grams\n")
+cat("Standard deviation:", round(sd_bwt, 2), "grams\n")
+cat("Sample size:", n, "\n")
+cat("Test statistic:", round(t_stat, 3), "\n")
+```
+
+Calculate critical value
+
+```{r}
+critical_value <- qt(0.05, df = 73, lower.tail = TRUE)
+cat("Critical value:", round(critical_value, 3), "\n")
+```
+
+Perform one-sample t-test
+
+```{r}
+t_test_result <- t.test(smoking_data$bwt, mu = 3200, alternative = "less")
+```
+
+Print results
+```{r}
+print(t_test_result)
+```
+
+One Sample t-test
+data:  smoking_data$bwt
+t = -5.5859, df = 73, p-value = 7.398e-07
+alternative hypothesis: true mean is less than 3200
+95 percent confidence interval:
+     -Inf 2934.258
+sample estimates:
+mean of x
+  2771.933
+  
+

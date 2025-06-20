@@ -1,0 +1,128 @@
+---
+title: "Exercise 7"
+author: "G.K Akwaboah"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(ggplot2)
+```
+
+1. Smoking and Birth Weight
+a. Test Selection and Sample Size Calculation
+Two sample T-test
+
+# Given values
+```{r}
+mu1 <- 3200  # non-smokers
+mu2 <- 2850  # smokers
+sd <- 700    # standard deviation (same for both)
+alpha <- 0.05
+z_alpha <- 1.96
+power <- 0.80
+z_beta <- 0.84 #for 80% power
+beta <- 0.20 # 1 - power
+effect_size <- (mu1 - mu2) / sd
+```
+
+Least sample size needed, n
+```{r}
+n = (((z_alpha + z_beta)*sd)/(mu1 -mu2))^2
+```
+
+b. Load Data and Perform Test
+```{r}
+data(birthwt)
+head(birthwt)
+```
+
+# Create smoking variable: 1 = smoker, 0 = non-smoker. convert to factor
+```{r}
+birthwt$smoke <- factor(birthwt$smoke, labels = c("Non-Smoker", "Smoker"))
+```
+
+# Check sample sizes
+```{r}
+table(birthwt$smoke)
+```
+
+# Perform two-sample t-test
+```{r}
+t_test_result <- t.test(bwt ~ smoke, data = birthwt, var.equal = TRUE)
+t_test_result
+```
+
+c. Compare Mother's Weight Distribution
+# Boxplot for mother's weight (lwt)
+
+```{r}
+ggplot(birthwt, aes(x = smoke, y = lwt)) +
+  geom_boxplot(fill = c("red", "blue")) +
+  labs(title = "Mother's Weight by Smoking Status", y = "Weight (lbs)", x = "Smoking Status")
+```
+
+# Check normality visually
+```{r}
+ggplot(birthwt, aes(sample = lwt)) +
+  stat_qq() + stat_qq_line() +
+  facet_wrap(~smoke)
+```
+
+# Perform Wilcoxon rank sum test (non-parametric)
+```{r}
+wilcox_test <- wilcox.test(lwt ~ smoke, data = birthwt)
+wilcox_test
+```
+
+
+2. Bulliforton Drug Study
+a. Scientific Question and Hypothesis
+H₀ (null hypothesis): The treatment with Bulliforton has no effect (success rates are equal).
+
+H₁ (alternative hypothesis): Bulliforton affects the success rate.
+
+Test: Chi-squared test on 2×2 contingency table.
+
+b. Load and Analyze Primary Endpoint
+# Load dataset from URL
+
+```{r}
+bull_data <- read.csv("http://www.uni-kiel.de/medinfo/lehre/medlife/bulliforton.csv")
+```
+
+# Two-way table: treatment vs primary EP
+```{r}
+file_path <- "C:/Users/gkakw/Desktop/Kiel/001 semester 1/004 Med Statistics/bulliforton.csv"
+bull_data <- read.csv2(file_path, dec = ",")
+names (bull_data)
+table_primary <- table(bull_data$Treatment, bull_data$primary_EP)
+table_primary
+```
+
+# Chi-squared test
+```{r}
+chi_primary <- chisq.test(table_primary)
+chi_primary
+```
+
+c. Secondary Endpoints with Multiple Testing Correction
+# Secondary EP(i)
+```{r}
+table_sec1 <- table(bull_data$Treatment, bull_data$sec_EP_i)
+chi_sec1 <- chisq.test(table_sec1)
+```
+
+# Secondary EP(ii)
+```{r}
+table_sec2 <- table(bull_data$Treatment, bull_data$sec_EP_ii)
+chi_sec2 <- chisq.test(table_sec2)
+```
+
+# Adjust p-values using Bonferroni
+```{r}
+pvals <- c(chi_sec1$p.value, chi_sec2$p.value)
+p.adjust(pvals, method = "bonferroni")
+```
